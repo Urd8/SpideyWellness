@@ -45,7 +45,7 @@ This Telegram bot guides users through a predefined flowchart, asking questions 
 
 ## File Structure
 
-- `gpttest.py`: Main bot logic
+- `Bot.py`: Main bot logic
 - `flowchart_data.json`: Flowchart structure and content
 - `.env`: Environment variables (not tracked in git)
 
