@@ -36,25 +36,57 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if chat_id in user_state:
         current_layer = user_state[chat_id]["layer"]
 
-        if user_response in current_layer.get("Options", []):
-            next_layer_key = current_layer.get("Layer 2", {}).get(user_response)
-            if next_layer_key:
-                # Proceed to the next layer
-                user_state[chat_id]["layer"] = next_layer_key
-                reply_markup = ReplyKeyboardMarkup([next_layer_key["Options"]], one_time_keyboard=True)
-                await update.message.reply_text(next_layer_key["Question"], reply_markup=reply_markup)
+        if "Layer 5" in current_layer:
+            # We're at Layer 5, handle the final response
+            final_answer = current_layer["Layer 5"].get(user_response)
+            if final_answer:
+                await update.message.reply_text(final_answer)
+                user_state.pop(chat_id, None)  # End the session
             else:
-                # Check if we're at Layer 3
-                layer_3 = current_layer.get("Layer 3", {}).get(user_response)
-                if layer_3:
-                    user_state[chat_id]["layer"] = layer_3
-                    reply_markup = ReplyKeyboardMarkup([layer_3["Options"]], one_time_keyboard=True)
-                    await update.message.reply_text(layer_3["Question"], reply_markup=reply_markup)
-                else:
-                    # We must be at Layer 4 (final answer)
-                    final_answer = current_layer.get("Layer 4", {}).get(user_response, "Invalid response")
-                    await update.message.reply_text(final_answer)
-                    user_state.pop(chat_id, None)  # End the session
+                await update.message.reply_text("Invalid option, please try again.")
+        elif "Layer 4" in current_layer:
+            # We're at Layer 4, handle the response or move to Layer 5
+            layer_4_response = current_layer["Layer 4"].get(user_response)
+            if isinstance(layer_4_response, dict) and "Layer 5" in layer_4_response:
+                # Move to Layer 5
+                user_state[chat_id]["layer"] = layer_4_response
+                await update.message.reply_text(layer_4_response["Response"])
+                reply_markup = ReplyKeyboardMarkup([layer_4_response["Options"]], one_time_keyboard=True)
+                await update.message.reply_text(layer_4_response["Question"], reply_markup=reply_markup)
+            elif isinstance(layer_4_response, str):
+                # This is a final answer
+                await update.message.reply_text(layer_4_response)
+                user_state.pop(chat_id, None)  # End the session
+            else:
+                await update.message.reply_text("Invalid option, please try again.")
+        elif "Layer 3" in current_layer:
+            # We're at Layer 3, handle the response or move to Layer 4
+            layer_3_response = current_layer["Layer 3"].get(user_response)
+            if isinstance(layer_3_response, dict) and "Layer 4" in layer_3_response:
+                # Move to Layer 4
+                user_state[chat_id]["layer"] = layer_3_response
+                await update.message.reply_text(layer_3_response["Response"])
+                reply_markup = ReplyKeyboardMarkup([layer_3_response["Options"]], one_time_keyboard=True)
+                await update.message.reply_text(layer_3_response["Question"], reply_markup=reply_markup)
+            elif isinstance(layer_3_response, str):
+                # This is a final answer
+                await update.message.reply_text(layer_3_response)
+                user_state.pop(chat_id, None)  # End the session
+            else:
+                await update.message.reply_text("Invalid option, please try again.")
+        elif user_response in current_layer.get("Options", []):
+            next_layer = current_layer["Layer 2"].get(user_response)
+            if isinstance(next_layer, dict) and "Question" in next_layer:
+                # Proceed to the next layer
+                user_state[chat_id]["layer"] = next_layer
+                reply_markup = ReplyKeyboardMarkup([next_layer["Options"]], one_time_keyboard=True)
+                await update.message.reply_text(next_layer["Question"], reply_markup=reply_markup)
+            elif isinstance(next_layer, str):
+                # This is a final answer
+                await update.message.reply_text(next_layer)
+                user_state.pop(chat_id, None)  # End the session
+            else:
+                await update.message.reply_text("Invalid option, please try again.")
         else:
             await update.message.reply_text("Invalid option, please try again.")
     else:
