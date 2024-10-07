@@ -1,110 +1,71 @@
-from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-import os
-from dotenv import load_dotenv
-from flowchart_data import flowchart
-import logging  # Add this import
-
-# Set up logging
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
-load_dotenv()  # Load environment variables from a .env file
-
-# Store user states to track which layer they are in
-user_state = {}
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.message.chat_id
-    user = update.effective_user
-    logger.info(f"User {user.id} ({user.username}) started the bot")
-    # Set the user to Layer 1
-    user_state[chat_id] = {"layer": flowchart["Layer 1"]}
-    reply_markup = ReplyKeyboardMarkup([flowchart["Layer 1"]["Options"]], one_time_keyboard=True)
-    await update.message.reply_text(flowchart["Layer 1"]["Question"], reply_markup=reply_markup)
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    chat_id = update.message.chat_id
-    user = update.effective_user
-    user_response = update.message.text
-    
-    logger.info(f"User {user.id} ({user.username}) sent: {user_response}")
-
-    if chat_id in user_state:
-        current_layer = user_state[chat_id]["layer"]
-
-        if "Layer 5" in current_layer:
-            # We're at Layer 5, handle the final response
-            final_answer = current_layer["Layer 5"].get(user_response)
-            if final_answer:
-                await update.message.reply_text(final_answer)
-                user_state.pop(chat_id, None)  # End the session
-            else:
-                await update.message.reply_text("Invalid option, please try again.")
-        elif "Layer 4" in current_layer:
-            # We're at Layer 4, handle the response or move to Layer 5
-            layer_4_response = current_layer["Layer 4"].get(user_response)
-            if isinstance(layer_4_response, dict) and "Layer 5" in layer_4_response:
-                # Move to Layer 5
-                user_state[chat_id]["layer"] = layer_4_response
-                await update.message.reply_text(layer_4_response["Response"])
-                reply_markup = ReplyKeyboardMarkup([layer_4_response["Options"]], one_time_keyboard=True)
-                await update.message.reply_text(layer_4_response["Question"], reply_markup=reply_markup)
-            elif isinstance(layer_4_response, str):
-                # This is a final answer
-                await update.message.reply_text(layer_4_response)
-                user_state.pop(chat_id, None)  # End the session
-            else:
-                await update.message.reply_text("Invalid option, please try again.")
-        elif "Layer 3" in current_layer:
-            # We're at Layer 3, handle the response or move to Layer 4
-            layer_3_response = current_layer["Layer 3"].get(user_response)
-            if isinstance(layer_3_response, dict) and "Layer 4" in layer_3_response:
-                # Move to Layer 4
-                user_state[chat_id]["layer"] = layer_3_response
-                await update.message.reply_text(layer_3_response["Response"])
-                reply_markup = ReplyKeyboardMarkup([layer_3_response["Options"]], one_time_keyboard=True)
-                await update.message.reply_text(layer_3_response["Question"], reply_markup=reply_markup)
-            elif isinstance(layer_3_response, str):
-                # This is a final answer
-                await update.message.reply_text(layer_3_response)
-                user_state.pop(chat_id, None)  # End the session
-            else:
-                await update.message.reply_text("Invalid option, please try again.")
-        elif user_response in current_layer.get("Options", []):
-            next_layer = current_layer["Layer 2"].get(user_response)
-            if isinstance(next_layer, dict) and "Question" in next_layer:
-                # Proceed to the next layer
-                user_state[chat_id]["layer"] = next_layer
-                reply_markup = ReplyKeyboardMarkup([next_layer["Options"]], one_time_keyboard=True)
-                await update.message.reply_text(next_layer["Question"], reply_markup=reply_markup)
-            elif isinstance(next_layer, str):
-                # This is a final answer
-                await update.message.reply_text(next_layer)
-                user_state.pop(chat_id, None)  # End the session
-            else:
-                await update.message.reply_text("Invalid option, please try again.")
-        else:
-            await update.message.reply_text("Invalid option, please try again.")
-    else:
-        await update.message.reply_text("Please type /start to begin.")
-
-def main():
-    # Insert your bot token here
-    TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-    
-    application = Application.builder().token(TOKEN).build()
-
-    # Handlers
-    application.add_handler(CommandHandler('start', start))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    # Start the Bot
-    logger.info("Bot started")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
-
-if __name__ == '__main__':
-    main()
+flowchart = {
+    "Layer 1": {
+        "Question": "Choose a category:",
+        "Options": ["Tell me a Joke", "Bring me to Mental Wellbeing Resources and Materials", "I am feeling a little off colour", "I am currently experiencing very strong feelings and really need help"],
+        "Layer 2": {
+            "Tell me a Joke": {
+                "Question": "What type of joke would you like?",
+                "Options": ["Dad joke", "Knock-knock joke", "One-liner"],
+                "Layer 3": {
+                    "Dad joke": "Here's a dad joke for you: Why don't scientists trust atoms? Because they make up everything!",
+                    "Knock-knock joke": "Knock knock! Who's there? Interrupting cow. Interrupting cow w- MOO!",
+                    "One-liner": "Here's a one-liner: I used to be addicted to soap, but I'm clean now."
+                }
+            },
+            "Bring me to Mental Wellbeing Resources and Materials": "Here's a link to our mental health resources: https://drive.google.com/drive/folders/your-folder-id-here",
+            "I am feeling a little off colour": {
+                "Question": "I'm sorry to hear that. Could you please tell me how you are feeling now?\n1. I am feeling sad and experiencing insomnia lately. I have trouble concentrating making decisions and remembering things. I find that i am easily tensed and I do not look forward to work and activities as before\n2. I am constantly feeling anxious and stressed. I constantly feel that i am not good enough, fear of being judged..\n3. I feel that there is no meaning to life. I am unable to break out of this loop, and my feelings keep pushing me to hurt myself. I wish to be away from all these",
+                "Options": ["1", "2", "3"],
+                "Layer 3": {
+                    "1": {
+                        "Response": "I am so sorry to hear that. It must be tought to go through all these complex feelings by yourself. These feelings suggest that you are experiencing depression. It is important to talk to a mental health professional.",
+                        "Question": "Would you like to talk to someone about it ?",
+                        "Options": ["Paracounsellor", "Counsellor", "I'm okay for now"],
+                        "Layer 4": {
+                            "Paracounsellor": "Thank you for being courageous to take the brave step to reach out for help. Do reach out to your superior or the following Paracounsellors across our formation. Please feel free to drop a message to any of them to talk about your issues. All disclosures will be treated with utmost confidentiality.",
+                            "Counsellor": "Thank you for being courageous to take the brave step to reach out for help. Do reach out to your superior or the following \n SAF Counselling Centre 1800-278-0022\n Care Corner Counselling Centre :6353 1180 \n * Care corner is an external counselling centre contracted by SCC for personnel who wish to seek professional counselling outside SAF.",
+                            "I'm okay for now": "Alright, but remember that help is always available if you need it. Take care of yourself!"
+                        }
+                    },
+                    "2": {
+                        "Response": "I am so sorry to hear that, It must have been so tought to go through all these complex feelings by yourself. These feelings suggest that you are experiencing some levels of stress anxiety which may lead to depression",
+                        "Question": "Would you like to talk to someone about it ?",
+                        "Options": ["Paracounsellor", "Counsellor", "I'm okay for now"],
+                        "Layer 4": {
+                            "Paracounsellor": "Thank you for being courageous to take the brave step to reach out for help. Do reach out to your superior or the following Paracounsellors across our formation. Please feel free to drop a message to any of them to talk about your issues. All disclosures will be treated with utmost confidentiality.",
+                            "Counsellor": "Thank you for being courageous to take the brave step to reach out for help. Do reach out to your superior or the following \n SAF Counselling Centre 1800-278-0022\n Care Corner Counselling Centre :6353 1180 \n * Care corner is an external counselling centre contracted by SCC for personnel who wish to seek professional counselling outside SAF.",
+                            "I'm okay for now": "Alright, but remember that help is always available if you need it. Take care of yourself!"
+                        }
+                    },
+                    "3": {
+                        "Response": "I an so sorry to hear this.",
+                        "Question": " Is there someone that you trust whom you can reach out to?",
+                        "Options": ["Yes There is someone whom i trust", "No I do not have anyone to talk to", "I'm okay for now"],
+                        "Layer 4": {
+                            "Yes There is someone whom i trust": "That is great, you are doing such a good job to reach out to this individual of your choice. Please do take good care of yourself.",
+                            "No I do not have anyone to talk to": {
+                                "Response": "It must be have been so tough to go through all these complex feelings by yourself.",
+                                "Question": "Would you like to talk to a trained counsellor about it?",
+                                "Options": ["Yes, I'd like to talk to a counsellor", "No, not at this time"],
+                                "Layer 5": {
+                                    "Yes, I'd like to talk to a counsellor": "Thank you for being courageous to take the brave step to reach out for help. Do reach out to your superior or the following \n SAF Counselling Centre 1800-278-0022\n Care Corner Counselling Centre :6353 1180 \n * Care corner is an external counselling centre contracted by SCC for personnel who wish to seek professional counselling outside SAF.",
+                                    "No, not at this time": "I understand that you may not feel ready to talk to someone right now. Please remember that this option is always available when you feel ready. In the meantime, here are some self-help resources that you might find useful: [List of self-help resources]"
+                                }
+                            },
+                            "I'm okay for now": "I understand, but please remember that help is always available if you need it. Your well-being is important, and I encourage you to reach out for support if these feelings persist or worsen."
+                        }
+                    }
+                }
+            },
+            "I am currently experiencing very strong feelings and really need help": {
+                "Question": "I'm here to help. What kind of support do you need right now?",
+                "Options": ["Emergency services", "Crisis hotline", "Coping strategies"],
+                "Layer 3": {
+                    "Emergency services": "If you're in immediate danger, please call your local emergency number.",
+                    "Crisis hotline": "Here's a crisis hotline you can call right now: [Crisis hotline number]",
+                    "Coping strategies": "Here are some immediate coping strategies: [List of coping strategies]"
+                }
+            }
+        }
+    }
+}
