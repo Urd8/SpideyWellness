@@ -1,4 +1,4 @@
-from telegram import Update, ReplyKeyboardMarkup
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import os
 from dotenv import load_dotenv
@@ -17,13 +17,17 @@ load_dotenv()  # Load environment variables from a .env file
 # Store user states to track which layer they are in
 user_state = {}
 
+def create_vertical_keyboard(options):
+    keyboard = [[KeyboardButton(option)] for option in options]
+    return ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.message.chat_id
     user = update.effective_user
     logger.info(f"User {user.id} ({user.username}) started the bot")
     # Set the user to Layer 1
     user_state[chat_id] = {"layer": flowchart["Layer 1"]}
-    reply_markup = ReplyKeyboardMarkup([flowchart["Layer 1"]["Options"]], one_time_keyboard=True)
+    reply_markup = create_vertical_keyboard(flowchart["Layer 1"]["Options"])
     await update.message.reply_text(flowchart["Layer 1"]["Question"], reply_markup=reply_markup)
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -51,7 +55,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 # Move to Layer 5
                 user_state[chat_id]["layer"] = layer_4_response
                 await update.message.reply_text(layer_4_response["Response"])
-                reply_markup = ReplyKeyboardMarkup([layer_4_response["Options"]], one_time_keyboard=True)
+                reply_markup = create_vertical_keyboard(layer_4_response["Options"])
                 await update.message.reply_text(layer_4_response["Question"], reply_markup=reply_markup)
             elif isinstance(layer_4_response, str):
                 # This is a final answer
@@ -66,7 +70,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 # Move to Layer 4
                 user_state[chat_id]["layer"] = layer_3_response
                 await update.message.reply_text(layer_3_response["Response"])
-                reply_markup = ReplyKeyboardMarkup([layer_3_response["Options"]], one_time_keyboard=True)
+                reply_markup = create_vertical_keyboard(layer_3_response["Options"])
                 await update.message.reply_text(layer_3_response["Question"], reply_markup=reply_markup)
             elif isinstance(layer_3_response, str):
                 # This is a final answer
@@ -79,7 +83,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             if isinstance(next_layer, dict) and "Question" in next_layer:
                 # Proceed to the next layer
                 user_state[chat_id]["layer"] = next_layer
-                reply_markup = ReplyKeyboardMarkup([next_layer["Options"]], one_time_keyboard=True)
+                reply_markup = create_vertical_keyboard(next_layer["Options"])
                 await update.message.reply_text(next_layer["Question"], reply_markup=reply_markup)
             elif isinstance(next_layer, str):
                 # This is a final answer
