@@ -12,13 +12,13 @@ flowchart = {
                     "One-liner": "Here's a one-liner: I used to be addicted to soap, but I'm clean now."
                 }
             },
-            "Bring me to Mental Wellbeing Resources and Materials": "Here's a link to our mental health resources: https://drive.google.com/drive/folders/your-folder-id-here",
+            "Bring me to Mental Wellbeing Resources and Materials": "Here's a link to our mental health resources: https://drive.google.com/drive/folders/1P71803kYUPtqPI_LgvEiz-hGEQsvS-np?usp=drive_link",
             "I am feeling a little off colour": {
-                "Question": "I'm sorry to hear that. Could you please tell me how you are feeling now?\n1. I am feeling sad and experiencing insomnia lately. I have trouble concentrating making decisions and remembering things. I find that i am easily tensed and I do not look forward to work and activities as before\n2. I am constantly feeling anxious and stressed. I constantly feel that i am not good enough, fear of being judged..\n3. I feel that there is no meaning to life. I am unable to break out of this loop, and my feelings keep pushing me to hurt myself. I wish to be away from all these",
+                "Question": "I'm sorry to hear that. Could you please tell me how you are feeling now?\n1. I am feeling sad and experiencing insomnia lately. I have trouble concentrating making decisions and remembering things. I find that I am easily tensed and I do not look forward to work and activities as before.\n2. I am constantly feeling anxious and stressed. I constantly feel that I am not good enough and am unable to switch off from these inner voices. I fear I am on the verge to break down anytime.\n3. I feel that there is no meaning to life. I am unable to break out of this loop, and my feelings keep pushing me to hurt myself. I wish to be away from all these.",
                 "Options": ["1", "2", "3"],
                 "Layer 3": {
                     "1": {
-                        "Response": "I am so sorry to hear that. It must be tought to go through all these complex feelings by yourself. These feelings suggest that you are experiencing depression. It is important to talk to a mental health professional.",
+                        "Response": "I am so sorry to hear that. It must be tought to go through all these complex feelings by yourself. These feelings suggest that you are experiencing early onstage of depression. It is important to talk to a mental health professional.",
                         "Question": "Would you like to talk to someone about it ?",
                         "Options": ["Paracounsellor", "Counsellor", "I'm okay for now"],
                         "Layer 4": {
@@ -40,10 +40,10 @@ flowchart = {
                     "3": {
                         "Response": "I an so sorry to hear this.",
                         "Question": " Is there someone that you trust whom you can reach out to?",
-                        "Options": ["Yes There is someone whom i trust", "No I do not have anyone to talk to", "I'm okay for now"],
+                        "Options": ["Yes There is someone whom i trust", "No I do not have anyone to talk to.", "I'm okay for now."],
                         "Layer 4": {
                             "Yes There is someone whom i trust": "That is great, you are doing such a good job to reach out to this individual of your choice. Please do take good care of yourself.",
-                            "No I do not have anyone to talk to": {
+                            "No I do not have anyone to talk to.": {
                                 "Response": "It must be have been so tough to go through all these complex feelings by yourself.",
                                 "Question": "Would you like to talk to a trained counsellor about it?",
                                 "Options": ["Yes, I'd like to talk to a counsellor", "No, not at this time"],
@@ -58,12 +58,12 @@ flowchart = {
                 }
             },
             "I am currently experiencing very strong feelings and really need help": {
-                "Question": "I'm here to help. What kind of support do you need right now?",
-                "Options": ["Emergency services", "Crisis hotline", "Coping strategies"],
+                "Question": "I'm here to help. What kind of support do you need right now? \n SAF Counselling Centre is available at  1800-278-0022",
+                "Options": ["SOS (24H)", "SAMH", "IMH (24H)"],
                 "Layer 3": {
-                    "Emergency services": "If you're in immediate danger, please call your local emergency number.",
-                    "Crisis hotline": "Here's a crisis hotline you can call right now: [Crisis hotline number]",
-                    "Coping strategies": "Here are some immediate coping strategies: [List of coping strategies]"
+                    "SOS (24H)": "Samaritans of Singapore (SOS): 1767 (24-hour hotline) / 9151-1767 (24-hour CareText via WhatsApp) ",
+                    "SAMH": " Singapore Association for Mental Health (SAMH): 1800-283-7019 ",
+                    "IMH (24H)": "Institute of Mental Health's (IMH) Helpline: 6389-2222 (24-hour hotline)"
                 }
             }
         }
